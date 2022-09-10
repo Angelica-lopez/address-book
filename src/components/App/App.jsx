@@ -1,5 +1,6 @@
 import { useState, useEffect} from "react";
 import {Table, Button} from "react-bootstrap";
+import ClientModal from "../ClientModal/ClientModal";
 
 const clients = [
     {
@@ -19,12 +20,15 @@ const clients = [
 ];
 
 
-function App(){
+const App = () => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const openModal = () => setIsModalOpen(true);
     return (
         <div className="p-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h1>Clientes</h1>
-                <Button variant='primary'>Crear Cliente</Button>
+                <Button variant='primary' onClick={openModal}>
+                    Crear Cliente</Button>
             </div>
             <Table striped bordered>
                 <thead>
@@ -64,7 +68,12 @@ function App(){
                     ))}
                 </tbody>
             </Table>
+            <ClientModal 
+                isModalOpen={isModalOpen}
+                onCloseModal={() => setIsModalOpen(false)}
+            />
         </div>
+        
     )
 }
 
