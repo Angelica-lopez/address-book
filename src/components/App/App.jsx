@@ -1,73 +1,102 @@
 import { useState, useEffect} from "react";
 import {Table, Button} from "react-bootstrap";
 import ClientModal from "../ClientModal/ClientModal";
-
-const clients = [
-    {
-        id: 0,
-        nombre: 'Bigotes',
-        apellido: 'López',
-        telefono: 3043753430,
-        direccion: 'cra 14 # 47 A 100'
-    },
-    {
-        id: 1,
-        nombre: 'Yatin',
-        apellido: 'Monroy',
-        telefono: 3012413046,
-        direccion: 'cra 51 # 82-255'
-    }
-];
-
+import { getClients } from "../../api";
+import {
+    getClientsFromLocalStorage,
+    updateClientsFromLocalStorage,
+} from "../../utils/localStorage";
 
 const App = () => {
+    const [isLoading, setIsLoading] = useState(true);
+    const [clients, setClients] = useState(getClientsFromLocalStorage());
+    const [selectedClient, setSelectedClient] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    useEffect(() => {
+        getClients()
+          .then((res) => {
+            console.log(res)
+            if (!clients.length) setClients(res);
+          })
+          .finally(() => setIsLoading(false));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
+    
+    useEffect(() => {
+        updateClientsFromLocalStorage(clients);
+    }, [clients]);
+
     const openModal = () => setIsModalOpen(true);
+
+    const onRemoveClient = (clientId) => {
+        const updatedClients = clients.filter(({ id }) => id !== clientId);
+        setClients(updatedClients);
+      };
+
+    if (isLoading) {
+        return (
+        <div className="p-4 d-flex align-items-center justify-content-center vh-100">
+            <p>Loading...</p>
+        </div>
+        );
+    }
+
     return (
         <div className="p-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <h1>Clientes</h1>
                 <Button variant='primary' onClick={openModal}>
-                    Crear Cliente</Button>
+                    Crear Cliente
+                </Button>
             </div>
-            <Table striped bordered>
-                <thead>
-                    <tr>
-                        <th scope="col">Nombres</th>
-                        <th scope="col">Apellidos</th>
-                        <th scope="col">Teléfonos</th>
-                        <th scope="col">Direcciones</th>
-                        <th scope="col">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {clients.map((client) => (
-                        <tr key={client.id}>
-                            <td>{client.nombre}</td>
-                            <td>{client.apellido}</td>
-                            <td>{client.telefono}</td>
-                            <td>{client.direccion}</td>
-                            <td>
-                                <div className="d-flex">
+            {!clients.length ? (
+                <p>Aun no tienes clientes registrados.</p>
+            ) : (
+                <Table striped bordered>
+                    <thead>
+                        <tr>
+                            <th scope="col">Nombres</th>
+                            <th scope="col">Apellidos</th>
+                            <th scope="col">Dirección</th>
+                            <th scope="col">Telefono</th>
+                            <th scope="col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {clients.map((client) => (
+                            <tr key={client.id}>
+                                <td>{client.nombre}</td>
+                                <td>{client.apellido}</td>
+                                <td>{client.direccion}</td>
+                                <td>{client.telefono}</td>
+                                <td>
+                                    <div className="d-flex">
                                     <Button
+                                        onClick={() => {
+                                        setSelectedClient(client);
+                                        openModal(true);
+                                        }}
                                         variant="outline-primary"
                                         size="sm"
                                         className="me-2"
-                                        >
-                                            Editar
+                                    >
+                                        Editar
                                     </Button>
                                     <Button
                                         variant="outline-danger"
                                         size="sm"
+                                        onClick={() => onRemoveClient(client.id)}
                                     >
-                                    Eliminar 
+                                        Eliminar
                                     </Button>
-                                </div>
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </Table>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </Table>
+            )}
             <ClientModal 
                 isModalOpen={isModalOpen}
                 onCloseModal={() => setIsModalOpen(false)}
